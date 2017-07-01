@@ -71,7 +71,9 @@ class Orders extends DashboardPageController
     public function updatestatus($oID)
     {
         $data = $this->post();
-        StoreOrder::getByID($oID)->updateStatus($data['orderStatus']);
+        $order = StoreOrder::getByID($oID);
+        $order->updateStatus($data['orderStatus']);
+        $order->sendNotifications($data['orderStatus']);
         $this->redirect('/dashboard/store/orders/order',$oID);
     }
 

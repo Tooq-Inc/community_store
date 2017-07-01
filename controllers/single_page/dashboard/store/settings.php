@@ -20,6 +20,7 @@ class Settings extends DashboardPageController
        $this->set("states",Core::make('helper/lists/states_provinces')->getStates());
        $this->set("installedPaymentMethods",StorePaymentMethod::getMethods());
        $this->set("orderStatuses",StoreOrderStatus::getAll());
+       $this->set("orderStatusesList",StoreOrderStatus::getList());
        $productPublishTarget = Config::get('community_store.productPublishTarget');
        $this->set('productPublishTarget',$productPublishTarget);
     }
@@ -74,6 +75,8 @@ class Settings extends DashboardPageController
                 Config::save('community_store.notificationemails',$args['notificationEmails']);
                 Config::save('community_store.emailalerts',$args['emailAlert']);
                 Config::save('community_store.emailalertsname',$args['emailAlertName']);
+                Config::save('community_store.emailalertcustomer',$args['emailAlertCustomer']);
+                Config::save('community_store.emailalertcustomeronstatus',$args['emailAlertCustomerOnStatus']);
                 Config::save('community_store.productPublishTarget',$args['productPublishTarget']);
                 Config::save('community_store.guestCheckout',$args['guestCheckout']);
                 Config::save('community_store.shoppingDisabled',trim($args['shoppingDisabled']));

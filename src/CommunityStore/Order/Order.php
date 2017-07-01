@@ -790,50 +790,70 @@ class Order
     }
 
     public function sendNotifications() {
-        $mh = Core::make('mail');
+        $currentStatus = $this->getStatusHandle(); // get current order status
+        $informStatus = Config::get('community_store.emailalertcustomeronstatus'); // get the config setting for which status to inform customers on
+        $informStatus = array_map('trim',$informStatus); // trim the array
 
-        $notificationEmails = explode(",", Config::get('community_store.notificationemails'));
-        $notificationEmails = array_map('trim', $notificationEmails);
-        $validNotification = false;
+        if(in_array(strtolower($currentStatus),$informStatus)) // make sure we are getting a valid status
+        {
+            $mh = Core::make('mail');
 
-        $fromName = Config::get('community_store.emailalertsname');
-        $fromEmail = Config::get('community_store.emailalerts');
-        if (!$fromEmail) {
-            $fromEmail = "store@" . $_SERVER['SERVER_NAME'];
-        }
+            $notificationEmails = explode(",", Config::get('community_store.notificationemails'));
+            $notificationEmails = array_map('trim', $notificationEmails);
+            $validNotification = false;
 
-        //order notification
-        if ($fromName) {
-            $mh->from($fromEmail, $fromName);
-        } else {
-            $mh->from($fromEmail);
-        }
-
-        $orderChoicesAttList = StoreOrderKey::getAttributeListBySet('order_choices');
-
-        if (!is_array($orderChoicesAttList)) {
-            $orderChoicesAttList = array();
-        }
-
-        // Create "on_before_community_store_order_notification_emails" event and dispatch
-        $event = new StoreOrderEvent($this);
-        $event->setNotificationEmails($notificationEmails);
-        $event = Events::dispatch('on_before_community_store_order_notification_emails', $event);
-        $notificationEmails = $event->getNotificationEmails();
-
-
-        foreach ($notificationEmails as $notificationEmail) {
-            if ($notificationEmail) {
-                $mh->to($notificationEmail);
-                $validNotification = true;
+            $fromName = Config::get('community_store.emailalertsname');
+            $fromEmail = Config::get('community_store.emailalerts');
+            if (!$fromEmail) {
+                $fromEmail = "store@" . $_SERVER['SERVER_NAME'];
             }
-        }
 
-        if ($validNotification) {
-            $mh->addParameter('orderChoicesAttList', $orderChoicesAttList);
-            $mh->addParameter("order", $this);
-            $mh->load("new_order_notification", "community_store");
-            $mh->sendMail();
+            //order notification
+            if ($fromName) {
+                $mh->from($fromEmail, $fromName);
+            } else {
+                $mh->from($fromEmail);
+            }
+
+            $orderChoicesAttList = StoreOrderKey::getAttributeListBySet('order_choices');
+
+            if (!is_array($orderChoicesAttList)) {
+                $orderChoicesAttList = array();
+            }
+
+            // Create "on_before_community_store_order_notification_emails" event and dispatch
+            $event = new StoreOrderEvent($this);
+            $event->setNotificationEmails($notificationEmails);
+            $event = Events::dispatch('on_before_community_store_order_notification_emails', $event);
+            $notificationEmails = $event->getNotificationEmails();
+
+
+            foreach ($notificationEmails as $notificationEmail) {
+                if ($notificationEmail) {
+                    $mh->to($notificationEmail);
+                    $validNotification = true;
+                }
+            }
+
+            if($currentStatus != "incomplete") // we will see if its an added order
+            {
+                $informCustomer = Config::get('community_store.emailalertcustomer');
+                if($informCustomer)
+                {
+                    $mh->to($this->getAttribute("email"));
+                    $mh->addParameter('orderHistory', $this->getStatusHistory());
+                    $mh->addParameter("order", $this);
+                    $mh->load("order_status_change", "community_store");
+                    $mh->sendMail();
+                }
+            }
+
+            if ($validNotification) {
+                $mh->addParameter('orderChoicesAttList', $orderChoicesAttList);
+                $mh->addParameter("order", $this);
+                $mh->load("new_order_notification", "community_store");
+                $mh->sendMail();
+            }
         }
     }
 

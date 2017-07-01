@@ -238,6 +238,24 @@
                         </div>
                     </div>
 
+                    <h4><?= t('Inform Customer on Status Change');?></h4>
+
+                    <div class="row">
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <label><?= $form->checkbox('emailAlertCustomer', '1',Config::get('community_store.emailalertcustomer') ? '1' : '0')?>
+                                <?= t('Send Notifications to customers?');?></label>
+                            </div>
+                        </div>
+
+                        <div class="col-xs-6">
+                            <div class="form-group">
+                                <?= $form->label('emailAlertCustomerOnStatus',t('Select which statuses'));?>
+                                <?= $form->selectMultiple('emailAlertCustomerOnStatus',$orderStatusesList,Config::get('community_store.emailalertcustomeronstatus'));?>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <h3><?= t('Receipt Emails');?></h3>
 
                     <div class="form-group">
